@@ -63,6 +63,8 @@ void Drawer::Init() {
   ImGui_ImplOpenGL3_Init("#version 130");
 
   gfx_impl->last_time = ImGui::GetTime();
+  ImGui::SetNextWindowSize({static_cast<float>(cfg.resolution[0]),
+                            static_cast<float>(cfg.resolution[1])});
 }
 
 void Drawer::UpdateLocalPlayer(Position&& pos) {
@@ -74,6 +76,13 @@ void Drawer::UpdateEntity(const std::string& name, Position&& pos) {
   if (found == entities.end()) return;
 
   entities[name].position = std::move(pos);
+}
+
+void Drawer::UpdateEntityRelative(const std::string& name, const Position& pos_rel) {
+  auto found = entities.find(name);
+  if (found == entities.end()) return;
+
+  entities[name].position += pos_rel;
 }
 
 void Drawer::AddEntity(const std::string& name, Entity&& entity) {
@@ -121,6 +130,10 @@ void Drawer::Render() {
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
   glfwSwapBuffers(gfx_impl->window);
+}
+
+float Drawer::GetDeltaTime() {
+  return gfx_impl->delta_time;
 }
 
 void Drawer::RenderRadarWindow() {

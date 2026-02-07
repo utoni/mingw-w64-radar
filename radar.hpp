@@ -6,11 +6,22 @@
 #include <unordered_map>
 #include <vector>
 
+#include <radar_common.h>
+
+extern "C" {
+#include <stdatomic.h>
+};
+
 namespace Radar {
 struct Position {
   float x = 0.0f;
   float y = 0.0f;
   float rotation = 0.0f;  // in degree
+  void operator+=(const Position& other) {
+    x += other.x;
+    y += other.y;
+    rotation += other.rotation;
+  }
 };
 
 struct Color {
@@ -53,11 +64,13 @@ class Drawer {
   void Init();
   void UpdateLocalPlayer(Position&& pos);
   void UpdateEntity(const std::string& name, Position&& pos);
+  void UpdateEntityRelative(const std::string& name, const Position& pos_rel);
   void AddEntity(const std::string& name, Entity&& entity);
   void RemoveEntity(const std::string& name);
   bool WindowShouldClose();
   bool WindowPollEvents();
   void Render();
+  float GetDeltaTime();
 
  private:
   struct LocalPlayer {

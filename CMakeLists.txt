@@ -15,6 +15,7 @@ target_include_directories(imgui PRIVATE "${GLFW_SRCDIR}/include")
 target_include_directories(imgui PUBLIC "${IMGUI_SRCDIR}" "${IMGUI_SRCDIR}/backends")
 
 add_library(radar STATIC radar.cpp)
+target_include_directories(radar PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(radar glfw imgui)
 
 if(MINGW)
@@ -29,5 +30,4 @@ else()
 endif()
 
 add_executable(radar_test test.cpp)
-target_include_directories(radar_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(radar_test radar)
