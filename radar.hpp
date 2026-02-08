@@ -6,12 +6,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <radar_common.h>
-
-extern "C" {
-#include <stdatomic.h>
-};
-
 namespace Radar {
 struct Position {
   float x = 0.0f;
@@ -62,11 +56,14 @@ class Drawer {
   Drawer(Config&& cfg);
   ~Drawer();
   void Init();
+  void InitWithContext(void* imgui_context);
   void UpdateLocalPlayer(Position&& pos);
+  void UpdateLocalPlayerRelative(const Position& pos_rel);
   void UpdateEntity(const std::string& name, Position&& pos);
   void UpdateEntityRelative(const std::string& name, const Position& pos_rel);
   void AddEntity(const std::string& name, Entity&& entity);
   void RemoveEntity(const std::string& name);
+  void ClearEntities();
   bool WindowShouldClose();
   bool WindowPollEvents();
   void Render();

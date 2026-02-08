@@ -1,7 +1,9 @@
 #include "GLFW/glfw3.h"
 #include "imgui.h"
+#ifndef ENABLE_STANDALONE
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#endif
 #ifdef __WIN32__
 #include <windows.h>
 #endif
@@ -34,6 +36,7 @@ Drawer::Drawer(Config&& cfg) : gfx_impl(std::make_unique<Drawer::GfxImpl>()) {
 Drawer::~Drawer() {}
 
 void Drawer::Init() {
+#ifndef ENABLE_STANDALONE
   // GLFW Setup
   if (glfwSetErrorCallback(glfw_error_callback) != NULL)
     throw std::runtime_error("glfwSetErrorCallback failed");
@@ -43,7 +46,7 @@ void Drawer::Init() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
   gfx_impl->window =
-      glfwCreateWindow(cfg.resolution[0], cfg.resolution[1], cfg.title.c_str(), nullptr, nullptr);
+    glfwCreateWindow(cfg.resolution[0], cfg.resolution[1], cfg.title.c_str(), nullptr, nullptr);
   if (gfx_impl->window == nullptr) throw std::runtime_error("glfwCreateWindow failed");
   glfwMakeContextCurrent(gfx_impl->window);
   glfwSwapInterval(1);
@@ -61,14 +64,23 @@ void Drawer::Init() {
     ImGui::StyleColorsLight();
   ImGui_ImplGlfw_InitForOpenGL(gfx_impl->window, true);
   ImGui_ImplOpenGL3_Init("#version 130");
-
-  gfx_impl->last_time = ImGui::GetTime();
   ImGui::SetNextWindowSize({static_cast<float>(cfg.resolution[0]),
                             static_cast<float>(cfg.resolution[1])});
+#endif
+  gfx_impl->last_time = ImGui::GetTime();
+}
+
+void Drawer::InitWithContext(void* imgui_context) {
+  ImGui::SetCurrentContext(reinterpret_cast<ImGuiContext*>(imgui_context));
+  gfx_impl->last_time = ImGui::GetTime();
 }
 
 void Drawer::UpdateLocalPlayer(Position&& pos) {
   local_player.position = std::move(pos);
+}
+
+void Drawer::UpdateLocalPlayerRelative(const Position& pos_rel) {
+  local_player.position += pos_rel;
 }
 
 void Drawer::UpdateEntity(const std::string& name, Position&& pos) {
@@ -93,6 +105,10 @@ void Drawer::RemoveEntity(const std::string& name) {
   entities.erase(name);
 }
 
+void Drawer::ClearEntities() {
+  entities.clear();
+}
+
 bool Drawer::WindowShouldClose() {
   return glfwWindowShouldClose(gfx_impl->window);
 }
@@ -111,12 +127,15 @@ bool Drawer::WindowPollEvents() {
 }
 
 void Drawer::Render() {
+#ifndef ENABLE_STANDALONE
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
+#endif
 
   RenderRadarWindow();
 
+#ifndef ENABLE_STANDALONE
   ImGui::Render();
 
   int display_w, display_h;
@@ -128,8 +147,8 @@ void Drawer::Render() {
   glClear(GL_COLOR_BUFFER_BIT);
 
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
   glfwSwapBuffers(gfx_impl->window);
+#endif
 }
 
 float Drawer::GetDeltaTime() {
