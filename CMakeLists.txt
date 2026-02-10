@@ -5,6 +5,12 @@ project(mingw-w64-radar VERSION 3.5.0 LANGUAGES C CXX)
 option(ENABLE_STANDALONE "Builds ImGui Radar logic as static library only, disables all GLFW/IMGUI initialization code. Useful for integrating this radar library into third party or private projects" OFF)
 
 set(IMGUI_SRCDIR "${PROJECT_SOURCE_DIR}/deps/imgui")
+set(IMGUI_DEFS -DIMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS=1
+               -DIMGUI_DISABLE_FILE_FUNCTIONS=1
+               -DIMGUI_DISABLE_DEMO_WINDOWS=1
+               -DIMGUI_DISABLE_OBSOLETE_FUNCTIONS=1
+               -DIMGUI_DISABLE_DEBUG_TOOLS=1)
+add_definitions(${IMGUI_DEFS})
 
 if(NOT ENABLE_STANDALONE)
     set(GLFW_SRCDIR "${PROJECT_SOURCE_DIR}/deps/glfw")
@@ -31,14 +37,13 @@ if(NOT ENABLE_STANDALONE)
     target_link_libraries(radar glfw imgui)
 endif()
 
-target_compile_definitions(radar PUBLIC -DSTATIC_IMGUI=1 -DGLFW_BUILD_WIN32=1)
 if(MINGW)
     message(STATUS "Build for Windows enabled: ${MINGW}")
-    target_compile_options(radar PUBLIC -mwindows -static-libgcc -static-libstdc++ -fomit-frame-pointer -ffunction-sections -fdata-sections -Os)
+    target_compile_options(radar PUBLIC -mwindows -static-libgcc -static-libstdc++ -fomit-frame-pointer -ffunction-sections -fdata-sections -fvisibility=hidden -Os)
     target_link_options(radar PUBLIC -static-libgcc -static-libstdc++ -s)
     target_link_libraries(radar opengl32)
 else()
-    target_compile_options(radar PUBLIC -static-libgcc -static-libstdc++ -fomit-frame-pointer -ffunction-sections -fdata-sections -Os)
+    target_compile_options(radar PUBLIC -static-libgcc -static-libstdc++ -fomit-frame-pointer -ffunction-sections -fdata-sections -fvisibility=hidden -Os)
     target_link_options(radar PUBLIC -static-libgcc -static-libstdc++ -s -flto)
     target_link_libraries(radar GL)
 endif()

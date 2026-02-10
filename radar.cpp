@@ -1,3 +1,5 @@
+#define IM_ASSERT(x)
+
 #include "GLFW/glfw3.h"
 #include "imgui.h"
 #ifndef ENABLE_STANDALONE
