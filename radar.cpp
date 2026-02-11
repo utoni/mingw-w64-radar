@@ -17,10 +17,10 @@
 using namespace Radar;
 
 struct Drawer::GfxImpl {
-  ImVec4 clear_color;
-  GLFWwindow* window;
-  float last_time;
-  float delta_time;
+  ImVec4 clear_color = {};
+  GLFWwindow* window = nullptr;
+  float last_time = 0.0f;
+  float delta_time = 0.0f;
 };
 
 static void glfw_error_callback(int error, const char* description) {
@@ -75,12 +75,23 @@ void Drawer::InitWithContext(void* imgui_context) {
   gfx_impl->last_time = ImGui::GetTime();
 }
 
+Position Drawer::GetLocalPlayer() {
+  return local_player.position;
+}
+
 void Drawer::UpdateLocalPlayer(Position&& pos) {
   local_player.position = std::move(pos);
 }
 
 void Drawer::UpdateLocalPlayerRelative(const Position& pos_rel) {
   local_player.position += pos_rel;
+}
+
+std::optional<Position> Drawer::GetEntity(const std::string& name) {
+  auto found = entities.find(name);
+  if (found == entities.end()) return {};
+
+  return entities[name].position;
 }
 
 void Drawer::UpdateEntity(const std::string& name, Position&& pos) {
@@ -126,15 +137,21 @@ bool Drawer::WindowPollEvents() {
   return false;
 }
 
-void Drawer::Render() {
+void Drawer::NewFrame() {
 #ifndef ENABLE_STANDALONE
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
 #endif
+}
 
+void Drawer::Render() {
+  NewFrame();
   RenderRadarWindow();
+  EndFrame();
+}
 
+void Drawer::EndFrame() {
 #ifndef ENABLE_STANDALONE
   ImGui::Render();
 
@@ -153,6 +170,10 @@ void Drawer::Render() {
 
 float Drawer::GetDeltaTime() {
   return gfx_impl->delta_time;
+}
+
+void* Drawer::GetGlfwWindow() {
+  return gfx_impl->window;
 }
 
 void Drawer::RenderRadarWindow() {

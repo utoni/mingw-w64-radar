@@ -1,6 +1,13 @@
 #include <radar.hpp>
 
+#include <iostream>
 #include <random>
+#include <string>
+
+#include "imgui.h"
+
+static bool extended_tests = false;
+static bool extended_tests_rng = true;
 
 static void simple_test() {
   Radar::Config cfg;
@@ -17,7 +24,45 @@ static void simple_test() {
   drawer.Init();
   while (!drawer.WindowShouldClose()) {
     if (drawer.WindowPollEvents()) break;
-    drawer.Render();
+
+    if (extended_tests) {
+      drawer.NewFrame();
+      drawer.RenderRadarWindow();
+      ImGui::Begin("Test Options");
+      ImGui::Checkbox("Randomize", &extended_tests_rng);
+      if (!extended_tests_rng) {
+        auto pos = drawer.GetEntity("some_nickname");
+        if (pos) {
+          ImGui::SliderFloat("some_nickname x", &pos->x, -1000.0f, 1000.0f);
+          ImGui::SliderFloat("some_nickname y", &pos->y, -1000.0f, 1000.0f);
+          ImGui::SliderFloat("some_nickname rotation", &pos->rotation, 0.0f, 360.0f);
+          drawer.UpdateEntity("some_nickname", std::move(*pos));
+        }
+
+        pos = drawer.GetEntity("another_nickname");
+        if (pos) {
+          ImGui::SliderFloat("another_nickname x", &pos->x, -1000.0f, 1000.0f);
+          ImGui::SliderFloat("another_nickname y", &pos->y, -1000.0f, 1000.0f);
+          ImGui::SliderFloat("another_nickname rotation", &pos->rotation, 0.0f, 360.0f);
+          drawer.UpdateEntity("another_nickname", std::move(*pos));
+        }
+
+        pos = drawer.GetEntity("rotating_nobody");
+        if (pos) {
+          ImGui::SliderFloat("rotating_nobody x", &pos->x, -1000.0f, 1000.0f);
+          ImGui::SliderFloat("rotating_nobody y", &pos->y, -1000.0f, 1000.0f);
+          ImGui::SliderFloat("rotating_nobody rotation", &pos->rotation, 0.0f, 360.0f);
+          drawer.UpdateEntity("rotating_nobody", std::move(*pos));
+        }
+      }
+      ImGui::End();
+      drawer.EndFrame();
+      if (!extended_tests_rng)
+        continue;
+    } else {
+      drawer.Render();
+    }
+
     time_passed += drawer.GetDeltaTime();
     if (time_passed > 0.08f) {
       const auto rng = distrib(rd);
@@ -69,6 +114,15 @@ static void simple_test() {
   }
 }
 
-int main(int, char**) {
+int main(int argc, char** argv) {
+  static constexpr auto ets = "extended-tests";
+  if (argc == 2) {
+    const auto first_arg = std::string(argv[1]);
+    extended_tests = (first_arg == ets);
+  } else if (argc > 0) {
+    std::cout << "Usage: " << argv[0] << " [" << ets << "]\n";
+  } else return 1;
+
   simple_test();
+  return 0;
 }

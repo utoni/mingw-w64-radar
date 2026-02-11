@@ -44,14 +44,22 @@ endif()
 
 if(NOT ENABLE_STANDALONE)
     add_executable(radar_test test.cpp)
+    target_include_directories(radar_test PRIVATE
+                               "${IMGUI_SRCDIR}" "${IMGUI_SRCDIR}/backends")
     target_link_libraries(radar_test radar)
 
     add_custom_target(run-test)
+    add_custom_target(run-test-ext)
     if(MINGW)
         add_custom_command(
             TARGET run-test
             POST_BUILD
             COMMAND wine ${CMAKE_BINARY_DIR}/radar_test.exe
+        )
+        add_custom_command(
+            TARGET run-test-ext
+            POST_BUILD
+            COMMAND wine ${CMAKE_BINARY_DIR}/radar_test.exe extended-tests
         )
     else()
         add_custom_command(
@@ -59,6 +67,12 @@ if(NOT ENABLE_STANDALONE)
             POST_BUILD
             COMMAND ${CMAKE_BINARY_DIR}/radar_test
         )
+        add_custom_command(
+            TARGET run-test-ext
+            POST_BUILD
+            COMMAND ${CMAKE_BINARY_DIR}/radar_test extended-tests
+        )
     endif()
     add_dependencies(run-test radar_test)
+    add_dependencies(run-test-ext radar_test)
 endif()

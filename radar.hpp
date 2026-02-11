@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -57,8 +58,10 @@ class Drawer {
   ~Drawer();
   void Init();
   void InitWithContext(void* imgui_context);
+  Position GetLocalPlayer();
   void UpdateLocalPlayer(Position&& pos);
   void UpdateLocalPlayerRelative(const Position& pos_rel);
+  std::optional<Position> GetEntity(const std::string& name);
   void UpdateEntity(const std::string& name, Position&& pos);
   void UpdateEntityRelative(const std::string& name, const Position& pos_rel);
   void AddEntity(const std::string& name, Entity&& entity);
@@ -66,15 +69,18 @@ class Drawer {
   void ClearEntities();
   bool WindowShouldClose();
   bool WindowPollEvents();
+  void RenderRadarWindow();
+  void NewFrame();
   void Render();
+  void EndFrame();
   float GetDeltaTime();
+  void* GetGlfwWindow();
 
  private:
   struct LocalPlayer {
     Position position;
   };
 
-  void RenderRadarWindow();
   void RenderEntities();
 
   Config cfg;
