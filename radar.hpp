@@ -47,6 +47,7 @@ struct Config {
   unsigned int resolution[2] = {1920, 1080};
   std::string title = "Unnamed Radar";
   bool imgui_dark_style = true;
+  bool show_log = true;
 };
 
 class Drawer {
@@ -69,6 +70,8 @@ class Drawer {
   void ClearEntities();
   bool WindowShouldClose();
   bool WindowPollEvents();
+  void AddLogMsg(std::string&& msg);
+  void RenderLogWindow();
   void RenderRadarWindow();
   void NewFrame();
   void Render();
@@ -87,6 +90,7 @@ class Drawer {
   struct GfxImpl;
   std::unique_ptr<GfxImpl> gfx_impl;
   LocalPlayer local_player;
+  std::vector<std::string> log_entries;
   std::unordered_map<std::string, Entity> entities;
 };
 };  // namespace Radar
