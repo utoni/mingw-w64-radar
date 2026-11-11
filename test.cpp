@@ -22,11 +22,15 @@ static void simple_test() {
   std::uniform_int_distribution<> distrib(1, 10);
   float time_passed = 0.0f;
   drawer.Init();
+  drawer.AddLogMsg("Log Entry 1");
+  drawer.AddLogMsg("Log Entry 2");
+  drawer.AddLogMsg("Log Entry 3");
   while (!drawer.WindowShouldClose()) {
     if (drawer.WindowPollEvents()) break;
 
     if (extended_tests) {
       drawer.NewFrame();
+      drawer.RenderLogWindow();
       drawer.RenderRadarWindow();
       ImGui::Begin("Test Options");
       ImGui::Checkbox("Randomize", &extended_tests_rng);

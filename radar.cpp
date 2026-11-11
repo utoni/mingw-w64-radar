@@ -149,6 +149,7 @@ void Drawer::NewFrame() {
 
 void Drawer::Render() {
   NewFrame();
+  RenderLogWindow();
   RenderRadarWindow();
   EndFrame();
 }
@@ -176,6 +177,26 @@ float Drawer::GetDeltaTime() {
 
 void* Drawer::GetGlfwWindow() {
   return gfx_impl->window;
+}
+
+void Drawer::AddLogMsg(std::string&& msg) {
+  log_entries.emplace_back(std::move(msg));
+}
+
+void Drawer::RenderLogWindow() {
+  if (!cfg.show_log)
+    return;
+
+  ImGui::Begin("Logger");
+  if (ImGui::BeginTable("Log", 1)) {
+    for (const auto& entry : log_entries) {
+      ImGui::TableNextRow();
+      ImGui::TableNextColumn();
+      ImGui::Text("%s", entry.c_str());
+    }
+    ImGui::EndTable();
+  }
+  ImGui::End();
 }
 
 void Drawer::RenderRadarWindow() {
