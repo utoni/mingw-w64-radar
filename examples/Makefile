@@ -7,11 +7,11 @@ $(error KMEM_ROOT is undefined)
 endif
 
 ifndef BUILD_DIR
-$(error BUILD_DIR is undefined)
+BUILD_DIR := .
 endif
 
 ifndef RADAR_BUILD_DIR
-$(error RADAR_BUILD_DIR is undefined)
+RADAR_BUILD_DIR := ../build-examples-mingw
 endif
 
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
@@ -20,6 +20,25 @@ CUSTOM_CFLAGS := -MMD -MP
 
 include $(DPP_ROOT)/Makefile.inc
 include $(KMEM_ROOT)/Makefile.inc
+
+radar_path_exists = \
+	$(if $(realpath $1),, \
+	$(error ERROR: $1 does not exist, run `build-mingw-with-examples.sh` first.))
+
+ifndef BUILD_CPP_OBJECT
+$(error BUILD_CPP_OBJECT not defined, check DPP_ROOT)
+endif
+
+$(call radar_path_exists,$(RADAR_BUILD_DIR)/libradar.a)
+$(call radar_path_exists,$(RADAR_BUILD_DIR)/libimgui.a)
+
+ifndef LIBKMEM
+$(error LIBKMEM not defined, check KMEM_ROOT)
+endif
+
+ifndef LIBKMEM_USER
+$(error LIBKMEM_USER not defined, check KMEM_ROOT)
+endif
 
 RADAR_TEST_FAKE_GAME = fake-game
 RADAR_TEST_FAKE_GAME_OBJECTS = $(BUILD_DIR)/$(RADAR_TEST_FAKE_GAME).o
