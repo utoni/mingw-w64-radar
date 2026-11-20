@@ -16,7 +16,8 @@ endif
 
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
 RADAR_SRC_DIR := $(abspath $(dir $(THIS_MAKEFILE))/..)
-CUSTOM_CFLAGS := -MMD -MP
+IMGUI_INC_DIR := $(RADAR_SRC_DIR)/deps/imgui
+CUSTOM_CFLAGS := -MMD -MP -I$(IMGUI_INC_DIR)
 
 include $(DPP_ROOT)/Makefile.inc
 include $(KMEM_ROOT)/Makefile.inc

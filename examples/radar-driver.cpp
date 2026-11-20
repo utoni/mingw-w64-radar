@@ -171,9 +171,17 @@ static void main_thread() {
 
     kshm.WriteRingbufferData([](void * data) {
       auto slot_data = reinterpret_cast<struct radar_ringbuffer_data*>(data);
-      strncpy(slot_data->msg, "Welcome.", strlen("Welcome."));
+      const char * const welcome = "Welcome.";
+      const auto n = eastl::min(strlen(welcome), sizeof(slot_data->msg) - 1);
+      memcpy(slot_data->msg, welcome, n);
+      slot_data->msg[n] = '\0';
     });
 
+    struct {
+      bool do_restart = false;
+      bool enable_local_player_read = true;
+      bool game_reads_disabled = false;
+    } options;
     size_t iterations = 0;
     while (kshm.ProcessEvents(0LL) != false
            && ipc.WaitIndefinitely() == STATUS_SUCCESS)
@@ -184,40 +192,77 @@ static void main_thread() {
       }
       ipc.Reset();
 
+      if (options.do_restart) {
+        options.do_restart = false;
+        break;
+      }
+
       if (((++iterations) % 100) == 0) {
         auto rstr = eastl::string("Data: ") + ::to_string(iterations);
         kshm.WriteRingbufferData([&rstr](void * data) {
           auto slot_data = reinterpret_cast<struct radar_ringbuffer_data*>(data);
-          strncpy(slot_data->msg, eastl::data(rstr), eastl::size(rstr));
+          const auto n = eastl::min(eastl::size(rstr), sizeof(slot_data->msg) - 1);
+          memcpy(slot_data->msg, eastl::data(rstr), n);
+          slot_data->msg[n] = '\0';
         });
       }
 
-      const auto entites_ptr = get_entities_ptr();
-      if (entites_ptr == 0)
-        break;
-      const auto amount_of_entities = get_entities_used();
-      radar_buffer_data radar_data = {};
       auto i = 0u;
-      for (; i < amount_of_entities && i < MAX_ENTITIES; ++i) {
-        radar_entity radar_ent;
-        if (!get_entity(entites_ptr, i, radar_ent))
-          continue;
+      radar_buffer_data radar_data = {};
+      radar_data.type = TYPE_ENTITES;
+      if (!options.game_reads_disabled) {
+        const auto entites_ptr = get_entities_ptr();
+        if (entites_ptr == 0)
+          break;
+        const auto amount_of_entities = get_entities_used();
+        for (; i < amount_of_entities && i < MAX_ENTITIES; ++i) {
+          radar_entity radar_ent;
+          if (!get_entity(entites_ptr, i, radar_ent))
+            continue;
 
 #if 0
-        DbgPrint("[%u] addr=0x%llX name='%.*s'\n", i,
-                 (unsigned long long)(entites_ptr + i * sizeof(radar_entity)),
-                 (int)sizeof(radar_ent.name), radar_ent.name);
+          DbgPrint("[%u] addr=0x%llX name='%.*s'\n", i,
+                   (unsigned long long)(entites_ptr + i * sizeof(radar_entity)),
+                   (int)sizeof(radar_ent.name), radar_ent.name);
 #endif
-        radar_data.entities[radar_data.count] = radar_ent;
-        radar_data.count++;
+          if (options.enable_local_player_read || strncmp(radar_ent.name, "LocalPlayer", sizeof(radar_ent.name)) != 0)
+          {
+            radar_data.entities[radar_data.count] = radar_ent;
+            radar_data.count++;
+          }
+        }
       }
+
+      if (!options.game_reads_disabled && i == 0)
+        break;
+
+      kshm.ReadBufferData([&options, &radar_data, &kshm](void *data, uint64_t) {
+        auto slot_data = reinterpret_cast<struct radar_buffer_data*>(data);
+        if (slot_data->type == TYPE_TO_KERNEL) {
+          options.do_restart = slot_data->to_kernel.do_restart;
+          options.game_reads_disabled = slot_data->to_kernel.disable_game_reads;
+          options.enable_local_player_read = slot_data->to_kernel.enable_local_player_read;
+          radar_data.type = TYPE_TO_USER;
+          radar_data.to_user.do_restart = false;
+          radar_data.to_user.game_reads_disabled = options.game_reads_disabled;
+          radar_data.to_user.local_player_read_enabled = options.enable_local_player_read;
+          auto rstr =
+            eastl::string(::to_string(options.do_restart) +
+              ::to_string(options.game_reads_disabled)) +
+              ::to_string(options.enable_local_player_read);
+          kshm.WriteRingbufferData([&rstr](void * data) {
+            auto slot_data = reinterpret_cast<struct radar_ringbuffer_data*>(data);
+            const auto n = eastl::min(eastl::size(rstr), sizeof(slot_data->msg) - 1);
+            memcpy(slot_data->msg, eastl::data(rstr), n);
+            slot_data->msg[n] = '\0';
+          });
+        }
+      });
 
       kshm.WriteBufferData([&radar_data](void *data) {
         auto slot_data = reinterpret_cast<struct radar_buffer_data*>(data);
         *slot_data = radar_data;
       });
-      if (i == 0)
-        break;
     }
   }
 

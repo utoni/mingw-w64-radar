@@ -61,6 +61,14 @@ int main()
   init_entites(max_entities);
 
   {
+    Entity local_player = {};
+    strncpy(&local_player.name[0], "LocalPlayer", sizeof(local_player.name));
+    local_player.pos_x = 0.0f;
+    local_player.pos_y = 0.0f;
+    local_player.pos_z = 0.0f;
+    add_entity(std::move(local_player));
+  }
+  {
     Entity smth = {};
     strncpy(&smth.name[0], "Something", sizeof(smth.name));
     smth.pos_x = 100.0f;
@@ -81,13 +89,20 @@ int main()
          sizeof(Entity), (void*)g_Game.entities, (void*)&g_Game.entities[1]);
 
   while (1) {
+    {
+      auto local_player = get_entity(0);
+      local_player->pos_x++;
+      local_player->pos_y++;
+      local_player->yaw -= 5.0f;
+    }
     float smth_x, anot_y;
     {
-      auto smth = get_entity(0);
+      auto smth = get_entity(1);
+      smth->yaw -= 1.0f;
       smth_x = ++smth->pos_x;
     }
     {
-      auto anot = get_entity(1);
+      auto anot = get_entity(2);
       anot->yaw += 10.0f;
       anot_y = ++anot->pos_y;
     }
